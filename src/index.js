@@ -57,7 +57,7 @@ socket.on('display', (object) => {
         const controls = new OrbitControls(camera, renderer.domElement);
 
         const loader = new GLTFLoader();
-        loader.load("http://dimetrd.cluster027.hosting.ovh.net/files/" + object[0].file, (gltf) => {
+        loader.load("https://dimetrodon.fr/files/" + object[0].file, (gltf) => {
             model = gltf.scene;
             scene.add(model);
             model.scale.set(0.09, 0.09, 0.09);
@@ -94,9 +94,14 @@ socket.on('display', (object) => {
 
     } else {
         let test = document.createElement('img');
-        test.classList.add('test')
+        let blur = document.createElement('img');
+        test.classList.add('image')
+        blur.classList.add('blur')
         test.src = "https://dimetrodon.fr/files/" + object[0].file;
+        blur.src = "https://dimetrodon.fr/files/" + object[0].file;
         document.getElementById('container').appendChild(test)
+
+        document.getElementById('container').appendChild(blur)
     }
 
 });
