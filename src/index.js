@@ -1,6 +1,9 @@
 const { io } = require('../node_modules/socket.io/client-dist/socket.io.js')
 var socket = io('https://dimetrondon-backend.onrender.com/');
 const THREE = require('three');
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const screenid = urlParams.get('id')
 import {
     GLTFLoader
 } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -9,7 +12,7 @@ import {
     OrbitControls
 } from 'three/examples/jsm/controls/OrbitControls.js';
 
-socket.on('display', (object) => {
+socket.on('display-' + screenid, (object) => {
     document.getElementById('container').innerHTML = ""
     console.log(object[0].genre)
 
