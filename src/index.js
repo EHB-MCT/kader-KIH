@@ -1,110 +1,98 @@
-const { io } = require('../node_modules/socket.io/client-dist/socket.io.js')
-var socket = io('https://dimetrondon-backend.onrender.com/');
-const THREE = require('three');
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const screenid = urlParams.get('id')
-import {
-    GLTFLoader
-} from 'three/examples/jsm/loaders/GLTFLoader.js';
+const { io } = require("../node_modules/socket.io/client-dist/socket.io.js");
+var socket = io("https://dimetrondon-backend.onrender.com/");
+var QRCode = require("qrcode");
 
-import {
-    OrbitControls
-} from 'three/examples/jsm/controls/OrbitControls.js';
+import { v4 as uuidv4 } from "uuid";
+import Cookies from "js-cookie";
 
-socket.on('display-' + screenid, (object) => {
-    document.getElementById('container').innerHTML = ""
-    console.log(object[0].genre)
+if (!Cookies.get("guid")) {
+  guidStuff();
+} else {
+  document.getElementById("canvas").remove();
+}
 
-    if (object[0].genre == "Video") {
-        let source = document.createElement("source")
+async function guidStuff() {
+  let result = 1;
+  do {
+    if (Cookies.get("temp")) {
+      const rawResponse = await fetch(
+        "https://dimetrondon-backend.onrender.com/checkGuid",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ guid: Cookies.get("guid") }),
+        }
+      );
+
+      const content = await rawResponse.json();
+
+      result = content.total;
+    } else {
+      Cookies.set("temp", uuidv4());
+    }
+  } while (result);
+  var canvas = document.getElementById("canvas");
+
+  QRCode.toCanvas(canvas, Cookies.get("temp"), function (error) {
+    if (error) console.error(error);
+    console.log("success!");
+    socket.on(Cookies.get("temp") + "-succes", (object) => {
+      console.log("setup");
+      Cookies.set("guid", Cookies.get("temp"));
+    });
+
+    socket.on(Cookies.get("temp") + "-load", (object) => {
+      document.getElementById("canvas").remove();
+    });
+  });
+}
+
+socket.on(Cookies.get("temp") + "-display", (object) => {
+  console.log(object);
+  fetch(
+    "https://dimetrondon-backend.onrender.com/getArtPieceToDisplay/" + object
+  )
+    .then((e) => e.json())
+    .then((object) => {
+      document.getElementById("container").innerHTML = "";
+
+      if (object[0].genre == "Video") {
+        let source = document.createElement("source");
         source.src = "https://dimetrodon.fr/files/" + object[0].file;
-        source.type = "video/mp4"
-        let test = document.createElement('video');
-        test.classList.add('test')
+        source.type = "video/mp4";
+        let test = document.createElement("video");
+        test.classList.add("test");
         test.autoplay = true;
         test.loop = true;
+        test.muted = true;
         test.load();
-        test.append(source)
-        document.getElementById('container').appendChild(test)
+        test.append(source);
+        document.getElementById("container").innerHTML = '';
 
-    } else if (object[0].genre == "3D") {
-        let model;
-        let MODEL_ROTATION = 0.002;
-        let LINE_COLOR = 0x000000;
-
-
-        const scene = new THREE.Scene();
-        const color2 = new THREE.Color(0x000000);
-        scene.background = color2;
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('container').appendChild(renderer.domElement);
-
-
-        const geometry = new THREE.BoxGeometry(window.innerWidth / 100, window.innerHeight / 100, 10);
-        const edges = new THREE.EdgesGeometry(geometry);
-        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
-            color: LINE_COLOR,
-            linewidth: 0.1
-        }));
-
-        line.translateY(2);
-        scene.add(line);
-
-        camera.position.z = 6;
-        camera.position.y = 2;
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-
-        const loader = new GLTFLoader();
-        loader.load("https://dimetrodon.fr/files/" + object[0].file, (gltf) => {
-            model = gltf.scene;
-            scene.add(model);
-            model.scale.set(0.09, 0.09, 0.09);
-
-
-            //light
-            const light1 = new THREE.PointLight('lightblue', 2);
-            light1.position.set(3, 10, 25);
-            const lightHolder = new THREE.Group();
-            lightHolder.add(light1);
-
-
-
-            scene.add(lightHolder);
-            const sphereSize = 1;
-            const pointLightHelper = new THREE.PointLightHelper(light1, sphereSize);
-            scene.add(pointLightHelper);
-
-            function animate() {
-                requestAnimationFrame(animate);
-                model.rotation.y += MODEL_ROTATION;
-                /*     cube.rotation.x += 0.01;
-                    cube.rotation.y += 0.01; */
-
-                renderer.render(scene, camera);
-
-            };
-
-            animate();
-        });
-
-
-
-
-    } else {
-        let test = document.createElement('img');
-        let blur = document.createElement('img');
-        test.classList.add('image')
-        blur.classList.add('blur')
+        document.getElementById("container").appendChild(test);
+      } else if (object[0].genre == "3D") {
+        document.getElementById(
+          "container"
+        ).innerHTML = `<model-viewer class="model" src="https://dimetrodon.fr/files/${
+          object[0].file
+        }" poster="https://dimetrodon.fr/files/${
+          object[0].file.split(".")[0]
+        }.jpg" shadow-intensity="4" auto-rotate auto-rotate-delay="10" touch-action="pan-y" alt="A 3D model carousel">`;
+      } else {
+        let test = document.createElement("img");
+        let blur = document.createElement("img");
+        test.classList.add("image");
+        blur.classList.add("blur");
         test.src = "https://dimetrodon.fr/files/" + object[0].file;
         blur.src = "https://dimetrodon.fr/files/" + object[0].file;
-        document.getElementById('container').appendChild(test)
+        document.getElementById("container").innerHTML = '';
 
-        document.getElementById('container').appendChild(blur)
-    }
+        document.getElementById("container").appendChild(test);
 
+        document.getElementById("container").appendChild(blur);
+      }
+    });
 });
