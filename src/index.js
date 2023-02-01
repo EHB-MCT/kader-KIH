@@ -101,7 +101,13 @@ function displayArt(){
 
     document.
     getElementById("container").appendChild(blur);
+
   }
+  socket.emit('broadcast-change', Cookies.get('temp') + '+'+ JSON.stringify(ooo[0]));
+
+  
+
+  
   counter++;
   if(counter >= idArts.length){
     counter =0;
@@ -110,7 +116,8 @@ function displayArt(){
 }
 
 async function getSettings(){
-  let res = await fetch("https://dimetrondon-backend.onrender.com/getFrameSettings/" +Cookies.get("temp"))
+  let res = await fetch("https://dimetrondon-backend.onrender.com/getFrameSettings/" +Cookies.get("temp"));
+  
   let ooo =  await res.json();
   let sett =(JSON.parse(ooo[0][0].settings))
   idArts = sett.ids;
