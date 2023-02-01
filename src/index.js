@@ -11,6 +11,7 @@ if (!Cookies.get("guid")) {
   guidStuff();
 } else {
   document.getElementById("canvas").remove();
+  document.getElementById("container").classList.add('load');
 }
 
 async function guidStuff() {
@@ -48,6 +49,8 @@ async function guidStuff() {
 
     socket.on(Cookies.get("temp") + "-load", (object) => {
       document.getElementById("canvas").remove();
+  document.getElementById("container").classList.add('load');
+
     });
   });
 }
