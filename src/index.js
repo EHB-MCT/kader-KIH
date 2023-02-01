@@ -1,7 +1,9 @@
 const { io } = require("../node_modules/socket.io/client-dist/socket.io.js");
 var socket = io("https://dimetrondon-backend.onrender.com/");
 var QRCode = require("qrcode");
-
+let ourInterval ;
+let idArts =[];
+let counter =0;
 import { v4 as uuidv4 } from "uuid";
 import Cookies from "js-cookie";
 
@@ -50,49 +52,68 @@ async function guidStuff() {
   });
 }
 
-socket.on(Cookies.get("temp") + "-display", (object) => {
-  console.log(object);
-  fetch(
-    "https://dimetrondon-backend.onrender.com/getArtPieceToDisplay/" + object
-  )
-    .then((e) => e.json())
-    .then((object) => {
-      document.getElementById("container").innerHTML = "";
-
-      if (object[0].genre == "Video") {
-        let source = document.createElement("source");
-        source.src = "https://dimetrodon.fr/files/" + object[0].file;
-        source.type = "video/mp4";
-        let test = document.createElement("video");
-        test.classList.add("test");
-        test.autoplay = true;
-        test.loop = true;
-        test.muted = true;
-        test.load();
-        test.append(source);
-        document.getElementById("container").innerHTML = '';
-
-        document.getElementById("container").appendChild(test);
-      } else if (object[0].genre == "3D") {
-        document.getElementById(
-          "container"
-        ).innerHTML = `<model-viewer class="model" src="https://dimetrodon.fr/files/${
-          object[0].file
-        }" poster="https://dimetrodon.fr/files/${
-          object[0].file.split(".")[0]
-        }.jpg" shadow-intensity="4" auto-rotate auto-rotate-delay="10" touch-action="pan-y" alt="A 3D model carousel">`;
-      } else {
-        let test = document.createElement("img");
-        let blur = document.createElement("img");
-        test.classList.add("image");
-        blur.classList.add("blur");
-        test.src = "https://dimetrodon.fr/files/" + object[0].file;
-        blur.src = "https://dimetrodon.fr/files/" + object[0].file;
-        document.getElementById("container").innerHTML = '';
-
-        document.getElementById("container").appendChild(test);
-
-        document.getElementById("container").appendChild(blur);
-      }
-    });
+socket.on(Cookies.get("temp") + "-display",async (object) => {
+  getSettings();
 });
+
+
+function displayArt(){
+  fetch("https://dimetrondon-backend.onrender.com/getArtPieceToDisplay/" + idArts[counter])
+  .then(e=>e.json())
+  .then(ooo =>{
+    
+  document.getElementById("container").innerHTML = "";
+  if (ooo[0].genre == "Video") {
+    let source = document.createElement("source");
+    source.src = "https://dimetrodon.fr/files/" + ooo[0].file;
+    source.type = "video/mp4";
+    let test = document.createElement("video");
+    test.classList.add("test");
+    test.autoplay = true;
+    test.loop = true;
+    test.muted = true;
+    test.load();
+    test.append(source);
+    document.getElementById("container").innerHTML = '';
+
+    document.getElementById("container").appendChild(test);
+  } else if (ooo[0].genre == "3D") {
+    document.getElementById(
+      "container"
+    ).innerHTML = `<model-viewer class="model" src="https://dimetrodon.fr/files/${
+      ooo[0].file
+    }" poster="https://dimetrodon.fr/files/${
+      ooo[0].file.split(".")[0]
+    }.jpg" shadow-intensity="4" auto-rotate auto-rotate-delay="10" touch-action="pan-y" alt="A 3D model carousel">`;
+  } else {
+    let test = document.createElement("img");
+    let blur = document.createElement("img");
+    test.classList.add("image");
+    blur.classList.add("blur");
+    test.src = "https://dimetrodon.fr/files/" + ooo[0].file;
+    blur.src = "https://dimetrodon.fr/files/" + ooo[0].file;
+    document.getElementById("container").innerHTML = '';
+
+    document.getElementById("container").appendChild(test);
+
+    document.
+    getElementById("container").appendChild(blur);
+  }
+  counter++;
+  if(counter >= idArts.length){
+    counter =0;
+  }
+})
+}
+
+async function getSettings(){
+  let res = await fetch("http://localhost:3000/getFrameSettings/" +Cookies.get("temp"))
+  let ooo =  await res.json();
+  let sett =(JSON.parse(ooo[0][0].settings))
+  idArts = sett.ids;
+  counter=0;
+  clearInterval(ourInterval);
+  displayArt();
+  ourInterval = setInterval(displayArt, sett.interval *1000);
+}
+getSettings();
