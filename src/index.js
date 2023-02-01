@@ -107,7 +107,7 @@ function displayArt(){
 }
 
 async function getSettings(){
-  let res = await fetch("http://localhost:3000/getFrameSettings/" +Cookies.get("temp"))
+  let res = await fetch("https://dimetrondon-backend.onrender.com/getFrameSettings/" +Cookies.get("temp"))
   let ooo =  await res.json();
   let sett =(JSON.parse(ooo[0][0].settings))
   idArts = sett.ids;
