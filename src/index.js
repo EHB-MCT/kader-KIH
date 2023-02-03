@@ -39,11 +39,16 @@ async function guidStuff() {
     } while (result);
     var canvas = document.getElementById("canvas");
     let ipp = ''
-    $.getJSON("https://api.ipify.org?format=json", function (data) {
-
+    fetch('https://www.myexternalip.com/json')
+    .then(response => {
+      if (response.ok) return response.json()
+      throw new Error('Network response was not ok.')
+    })
+    .then(data =>{
+        console.log(data)
         // Setting text of element P with id gfg
         ipp = data.ip
-        console.log(`${Cookies.get("temp")}+${ipp}`);
+      
         QRCode.toCanvas(canvas, `${Cookies.get("temp")}+${ipp}`, function (error) {
             if (error) console.error(error);
             console.log("success!");
@@ -72,7 +77,7 @@ function displayArt() {
     fetch("https://dimetrondon-backend.onrender.com/getArtPieceToDisplay/" + idArts[counter])
         .then(e => e.json())
         .then(ooo => {
-
+            console.log(ooo)
             document.getElementById("container").innerHTML = "";
             if (ooo[0].genre == "Video") {
                 let source = document.createElement("source");
@@ -132,4 +137,4 @@ async function getSettings() {
     displayArt();
     ourInterval = setInterval(displayArt, sett.interval * 1000);
 }
-getSettings();
+if (Cookies.get("guid")) getSettings();
