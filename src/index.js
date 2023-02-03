@@ -38,27 +38,29 @@ async function guidStuff() {
         }
     } while (result);
     var canvas = document.getElementById("canvas");
-    let ipp
+    let ipp = ''
     $.getJSON("https://api.ipify.org?format=json", function (data) {
 
         // Setting text of element P with id gfg
         ipp = data.ip
+        console.log(`${Cookies.get("temp")}+${ipp}`);
+        QRCode.toCanvas(canvas, `${Cookies.get("temp")}+${ipp}`, function (error) {
+            if (error) console.error(error);
+            console.log("success!");
+            socket.on(Cookies.get("temp") + "-succes", (object) => {
+                console.log("setup");
+                Cookies.set("guid", Cookies.get("temp"));
+
+            });
+
+            socket.on(Cookies.get("temp") + "-load", (object) => {
+                document.getElementById("canvas").remove();
+                document.getElementById("container").classList.add('load');
+
+            });
+        });
     })
-    QRCode.toCanvas(canvas, `${Cookies.get("temp")}+${ipp}`, function (error) {
-        if (error) console.error(error);
-        console.log("success!");
-        socket.on(Cookies.get("temp") + "-succes", (object) => {
-            console.log("setup");
-            Cookies.set("guid", Cookies.get("temp"));
 
-        });
-
-        socket.on(Cookies.get("temp") + "-load", (object) => {
-            document.getElementById("canvas").remove();
-            document.getElementById("container").classList.add('load');
-
-        });
-    });
 }
 
 socket.on(Cookies.get("temp") + "-display", async (object) => {
